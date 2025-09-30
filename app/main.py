@@ -18,7 +18,7 @@ from prometheus_fastapi_instrumentator import Instrumentator
 from app.api.v1.router import api_router
 from app.core.config import settings
 from app.core.logging import setup_logging
-from app.db.session import engine
+from app.db.session import engine, init_database, close_database
 
 
 @asynccontextmanager
@@ -33,14 +33,14 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
     setup_logging()
     
     # Initialize database connection pool
-    # Note: In production, you might want to test the connection here
+    await init_database()
     
     # Start background tasks or other services
     
     yield
     
     # Shutdown
-    await engine.dispose()
+    await close_database()
 
 
 def create_application() -> FastAPI:

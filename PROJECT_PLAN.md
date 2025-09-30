@@ -11,10 +11,10 @@ Building a production-grade AI video automation pipeline that converts viral Tik
   - ✅ Set up main FastAPI app with proper async architecture
   - ✅ Add boilerplate code and Python package structure
 
-- [ ] **Task 2: Set up core dependencies and config**
-  - Create requirements.txt, pyproject.toml, and .env configuration
-  - Include FastAPI, Celery, SQLAlchemy, Pydantic, redis, and other core dependencies
-  - Configure environment variable management
+- [x] **Task 2: Set up core dependencies and config** ✅ COMPLETED
+  - ✅ Create requirements.txt, pyproject.toml, and .env configuration
+  - ✅ Include FastAPI, Celery, SQLAlchemy, Pydantic, redis, and other core dependencies
+  - ✅ Configure environment variable management
 
 - [ ] **Task 3: Create Pydantic models and schemas**
   - Define data models for Video, Script, Avatar, PublishJob, and other entities
@@ -163,8 +163,8 @@ Building a production-grade AI video automation pipeline that converts viral Tik
 
 ## 🚀 Next Steps
 
-**Current Status**: Task 1 completed successfully! ✅
-**Next Task**: Task 2 - Set up core dependencies and config
+**Current Status**: Task 2 completed successfully! ✅
+**Next Task**: Task 3 - Create Pydantic models and schemas
 **Timeline**: Each task represents 1-2 days of development
 
 ---

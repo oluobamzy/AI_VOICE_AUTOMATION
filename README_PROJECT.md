@@ -81,9 +81,19 @@ AI_VOICE_AUTOMATION/
    source venv/bin/activate  # On Windows: venv\Scripts\activate
    ```
 
-3. **Install dependencies** (After Task 2 completion)
+3. **Install dependencies**
    ```bash
+   # Using pip
    pip install -r requirements.txt
+   
+   # Or for development
+   pip install -r requirements-dev.txt
+   
+   # Or using the modern approach
+   pip install -e .
+   
+   # Or using the convenience script
+   python scripts/manage.py setup dev
    ```
 
 4. **Configure environment**
@@ -109,13 +119,66 @@ AI_VOICE_AUTOMATION/
    # Start Celery worker (in separate terminal)
    celery -A app.tasks.celery_app worker --loglevel=info
    
+   # Or using the convenience script
+   python scripts/manage.py dev worker
+   
    # Start FastAPI application
    python run.py
+   
+   # Or using the convenience script  
+   python scripts/manage.py dev run
    ```
+
+## 🛠️ Development Tools
+
+The project includes several convenience tools:
+
+### Management CLI
+```bash
+# Setup development environment
+python scripts/manage.py setup dev
+
+# Run development server
+python scripts/manage.py dev run
+
+# Run tests with coverage
+python scripts/manage.py test run --cov
+
+# Check code quality
+python scripts/manage.py lint check
+
+# Fix code formatting
+python scripts/manage.py lint fix
+
+# Show project status
+python scripts/manage.py status
+```
+
+### Make Commands
+```bash
+# Setup development environment
+make dev-setup
+
+# Run development server
+make run-dev
+
+# Run tests with coverage
+make test-cov
+
+# Format code
+make format
+
+# Run linting
+make lint
+
+# Start with Docker
+make docker-run
+```
 
 ## 📋 Current Implementation Status
 
 ✅ **Task 1: FastAPI Project Scaffold** - COMPLETED
+✅ **Task 2: Set up core dependencies and config** - COMPLETED
 - ✅ Production-grade directory structure
 - ✅ FastAPI application with async architecture
 - ✅ Core configuration management
@@ -126,8 +189,12 @@ AI_VOICE_AUTOMATION/
 - ✅ Service layer architecture
 - ✅ Utility modules (FFmpeg, Storage)
 - ✅ Environment configuration
+- ✅ Modern Python packaging (pyproject.toml)
+- ✅ Development tools (Makefile, CLI, pre-commit)
+- ✅ Docker configuration for development
+- ✅ Database session management
+- ✅ Code quality tools and linting setup
 
-🔄 **Next: Task 2** - Set up core dependencies and config
 🔄 **Next: Task 3** - Create Pydantic models and schemas
 🔄 **Next: Task 4** - Set up database layer with SQLAlchemy
 

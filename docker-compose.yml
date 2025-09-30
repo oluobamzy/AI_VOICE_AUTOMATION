@@ -1,0 +1,160 @@
+# Docker Compose for AI Video Automation Pipeline Development
+# Use: docker-compose up -d
+
+version: '3.8'
+
+services:
+  # PostgreSQL Database
+  postgres:
+    image: postgres:15-alpine
+    container_name: ai_video_automation_db
+    environment:
+      POSTGRES_DB: ai_video_automation
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: password
+      POSTGRES_HOST_AUTH_METHOD: trust
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./scripts/init-db.sql:/docker-entrypoint-initdb.d/init-db.sql
+    networks:
+      - ai_video_network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Redis for Celery
+  redis:
+    image: redis:7-alpine
+    container_name: ai_video_automation_redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    networks:
+      - ai_video_network
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # FastAPI Application (Development)
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: development
+    container_name: ai_video_automation_app
+    environment:
+      - ENVIRONMENT=development
+      - DEBUG=true
+      - DATABASE_URL=postgresql+asyncpg://postgres:password@postgres:5432/ai_video_automation
+      - REDIS_URL=redis://redis:6379/0
+      - CELERY_BROKER_URL=redis://redis:6379/0
+      - CELERY_RESULT_BACKEND=redis://redis:6379/0
+    ports:
+      - "8000:8000"
+    volumes:
+      - .:/app
+      - /tmp/ai_video_automation:/tmp/ai_video_automation
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - ai_video_network
+    command: uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # Celery Worker
+  worker:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: development
+    container_name: ai_video_automation_worker
+    environment:
+      - ENVIRONMENT=development
+      - DEBUG=true
+      - DATABASE_URL=postgresql+asyncpg://postgres:password@postgres:5432/ai_video_automation
+      - REDIS_URL=redis://redis:6379/0
+      - CELERY_BROKER_URL=redis://redis:6379/0
+      - CELERY_RESULT_BACKEND=redis://redis:6379/0
+    volumes:
+      - .:/app
+      - /tmp/ai_video_automation:/tmp/ai_video_automation
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - ai_video_network
+    command: celery -A app.tasks.celery_app worker --loglevel=info
+
+  # Celery Beat (Scheduler)
+  beat:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: development
+    container_name: ai_video_automation_beat
+    environment:
+      - ENVIRONMENT=development
+      - DEBUG=true
+      - DATABASE_URL=postgresql+asyncpg://postgres:password@postgres:5432/ai_video_automation
+      - REDIS_URL=redis://redis:6379/0
+      - CELERY_BROKER_URL=redis://redis:6379/0
+      - CELERY_RESULT_BACKEND=redis://redis:6379/0
+    volumes:
+      - .:/app
+      - /tmp/ai_video_automation:/tmp/ai_video_automation
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - ai_video_network
+    command: celery -A app.tasks.celery_app beat --loglevel=info
+
+  # Flower (Celery Monitoring)
+  flower:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: development
+    container_name: ai_video_automation_flower
+    environment:
+      - ENVIRONMENT=development
+      - CELERY_BROKER_URL=redis://redis:6379/0
+      - CELERY_RESULT_BACKEND=redis://redis:6379/0
+    ports:
+      - "5555:5555"
+    volumes:
+      - .:/app
+    depends_on:
+      redis:
+        condition: service_healthy
+    networks:
+      - ai_video_network
+    command: celery -A app.tasks.celery_app flower --port=5555
+
+volumes:
+  postgres_data:
+    driver: local
+  redis_data:
+    driver: local
+
+networks:
+  ai_video_network:
+    driver: bridge
