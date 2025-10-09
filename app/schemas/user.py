@@ -9,7 +9,7 @@ from datetime import datetime
 from typing import Optional, List, Dict, Any
 from uuid import UUID
 
-from pydantic import BaseModel, EmailStr, Field, validator, root_validator
+from pydantic import BaseModel, EmailStr, Field, field_validator, model_validator
 from pydantic.types import SecretStr
 
 
@@ -20,7 +20,8 @@ class UserBase(BaseModel):
     full_name: Optional[str] = Field(None, max_length=200, description="Full name")
     is_active: bool = Field(default=True, description="Whether user is active")
     
-    @validator("username")
+    @field_validator("username")
+    @classmethod
     def validate_username(cls, v):
         """Validate username format."""
         if not v.replace("_", "").replace("-", "").isalnum():
@@ -33,16 +34,15 @@ class UserCreate(UserBase):
     password: SecretStr = Field(..., min_length=8, description="User password")
     confirm_password: str = Field(..., description="Password confirmation")
     
-    @root_validator
-    def validate_passwords_match(cls, values):
+    @model_validator(mode='after')
+    def validate_passwords_match(self):
         """Ensure password and confirm_password match."""
-        password = values.get('password')
-        confirm_password = values.get('confirm_password')
-        if password and confirm_password and password.get_secret_value() != confirm_password:
+        if self.password and self.confirm_password and self.password.get_secret_value() != self.confirm_password:
             raise ValueError("Passwords do not match")
-        return values
+        return self
     
-    @validator("password")
+    @field_validator("password")
+    @classmethod
     def validate_password_strength(cls, v):
         """Validate password strength."""
         password = v.get_secret_value()
@@ -131,14 +131,12 @@ class PasswordResetConfirm(BaseModel):
     new_password: SecretStr = Field(..., min_length=8, description="New password")
     confirm_password: str = Field(..., description="Password confirmation")
     
-    @root_validator
-    def validate_passwords_match(cls, values):
+    @model_validator(mode='after')
+    def validate_passwords_match(self):
         """Ensure password and confirm_password match."""
-        password = values.get('new_password')
-        confirm_password = values.get('confirm_password')
-        if password and confirm_password and password.get_secret_value() != confirm_password:
+        if self.new_password and self.confirm_password and self.new_password.get_secret_value() != self.confirm_password:
             raise ValueError("Passwords do not match")
-        return values
+        return self
 
 
 class UserPreferences(BaseModel):
@@ -150,14 +148,16 @@ class UserPreferences(BaseModel):
     api_rate_limit: int = Field(default=60, ge=1, le=1000, description="API rate limit per minute")
     storage_limit_gb: int = Field(default=10, ge=1, le=1000, description="Storage limit in GB")
     
-    @validator("default_video_quality")
+    @field_validator("default_video_quality")
+    @classmethod
     def validate_video_quality(cls, v):
         allowed_qualities = ["low", "medium", "high", "ultra"]
         if v not in allowed_qualities:
             raise ValueError(f"Video quality must be one of: {', '.join(allowed_qualities)}")
         return v
     
-    @validator("auto_publish_platforms")
+    @field_validator("auto_publish_platforms")
+    @classmethod
     def validate_platforms(cls, v):
         allowed_platforms = ["youtube", "tiktok", "instagram", "twitter", "facebook", "linkedin"]
         for platform in v:
@@ -187,7 +187,8 @@ class ApiKeyCreate(BaseModel):
     permissions: List[str] = Field(default_factory=list, description="API key permissions")
     expires_in_days: Optional[int] = Field(None, ge=1, le=365, description="Expiration in days")
     
-    @validator("permissions")
+    @field_validator("permissions")
+    @classmethod
     def validate_permissions(cls, v):
         allowed_permissions = [
             "videos:read", "videos:write", "videos:delete",
@@ -198,3 +199,18 @@ class ApiKeyCreate(BaseModel):
             if permission not in allowed_permissions:
                 raise ValueError(f"Invalid permission: {permission}")
         return v
+
+
+class ApiKeyResponse(BaseModel):
+    """Schema for API key response."""
+    id: UUID = Field(..., description="API key ID")
+    name: str = Field(..., description="API key name")
+    key_preview: str = Field(..., description="Masked API key for display")
+    permissions: List[str] = Field(..., description="API key permissions")
+    created_at: datetime = Field(..., description="Creation timestamp")
+    expires_at: Optional[datetime] = Field(None, description="Expiration timestamp")
+    last_used: Optional[datetime] = Field(None, description="Last usage timestamp")
+    is_active: bool = Field(..., description="Whether the key is active")
+    
+    class Config:
+        from_attributes = True

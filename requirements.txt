@@ -60,4 +60,4 @@ tenacity>=8.2.3
 pendulum>=2.1.2
 
 # CORS & Middleware
-python-cors>=1.7.0
+# Note: FastAPI has built-in CORS middleware, no additional package needed

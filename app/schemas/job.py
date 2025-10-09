@@ -9,7 +9,7 @@ from datetime import datetime
 from typing import Optional, Dict, Any, List
 from uuid import UUID
 
-from pydantic import BaseModel, Field, validator
+from pydantic import BaseModel, Field, field_validator
 
 
 class JobBase(BaseModel):
@@ -24,7 +24,8 @@ class JobCreate(JobBase):
     video_id: Optional[str] = Field(None, description="Associated video ID")
     scheduled_at: Optional[datetime] = Field(None, description="Scheduled execution time")
     
-    @validator("job_type")
+    @field_validator("job_type")
+    @classmethod
     def validate_job_type(cls, v):
         allowed_types = [
             "video_download",
@@ -82,7 +83,8 @@ class JobStatusResponse(BaseModel):
     retry_count: int = Field(default=0, ge=0, description="Number of retries")
     max_retries: int = Field(default=3, ge=0, description="Maximum retry attempts")
     
-    @validator("progress")
+    @field_validator("progress")
+    @classmethod
     def validate_progress(cls, v):
         if not 0 <= v <= 100:
             raise ValueError("Progress must be between 0 and 100")
@@ -113,7 +115,8 @@ class JobStatistics(BaseModel):
     average_duration: Optional[float] = Field(None, description="Average job duration in seconds")
     success_rate: float = Field(..., ge=0, le=100, description="Job success rate percentage")
     
-    @validator("success_rate")
+    @field_validator("success_rate")
+    @classmethod
     def validate_success_rate(cls, v):
         if not 0 <= v <= 100:
             raise ValueError("Success rate must be between 0 and 100")

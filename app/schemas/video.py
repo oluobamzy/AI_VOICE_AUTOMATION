@@ -9,7 +9,7 @@ from datetime import datetime
 from typing import Optional, List
 from uuid import UUID
 
-from pydantic import BaseModel, HttpUrl, Field, validator
+from pydantic import BaseModel, HttpUrl, Field, field_validator
 
 
 class VideoBase(BaseModel):
@@ -26,7 +26,8 @@ class VideoCreate(BaseModel):
     description: Optional[str] = Field(None, max_length=1000)
     tags: List[str] = Field(default_factory=list, max_items=20)
     
-    @validator("platform")
+    @field_validator("platform")
+    @classmethod
     def validate_platform(cls, v):
         allowed_platforms = ["tiktok", "youtube", "instagram", "twitter", "facebook"]
         if v.lower() not in allowed_platforms:
@@ -71,7 +72,8 @@ class VideoStatusResponse(BaseModel):
     estimated_completion: Optional[str] = Field(None, description="Estimated completion time")
     error_message: Optional[str] = Field(None, description="Error message if failed")
     
-    @validator("progress")
+    @field_validator("progress")
+    @classmethod
     def validate_progress(cls, v):
         if not 0 <= v <= 100:
             raise ValueError("Progress must be between 0 and 100")
@@ -112,15 +114,17 @@ class VideoProcessingConfig(BaseModel):
     avatar_template: Optional[str] = Field(None, description="Avatar template ID")
     voice_model: Optional[str] = Field(None, description="TTS voice model")
     
-    @validator("target_resolution")
-    def validate_resolution(cls, v):
+    @field_validator("target_resolution")
+    @classmethod
+    def validate_target_resolution(cls, v):
         if v:
             allowed_resolutions = ["480p", "720p", "1080p", "1440p", "4k"]
             if v not in allowed_resolutions:
                 raise ValueError(f"Resolution must be one of: {', '.join(allowed_resolutions)}")
         return v
     
-    @validator("quality")
+    @field_validator("quality")
+    @classmethod
     def validate_quality(cls, v):
         if v:
             allowed_qualities = ["low", "medium", "high", "ultra"]

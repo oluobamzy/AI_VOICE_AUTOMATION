@@ -13,7 +13,8 @@ from sqlalchemy import (
     Boolean, DateTime, String, Text, Integer, Float, JSON,
     ForeignKey, Index, UniqueConstraint, CheckConstraint, LargeBinary
 )
-from sqlalchemy.dialects.postgresql import UUID, ARRAY
+from sqlalchemy.dialects.postgresql import UUID
+from app.db.types import ArrayType, UUIDType, get_timestamp_server_default
 from sqlalchemy.orm import relationship, Mapped, mapped_column
 from sqlalchemy.sql import func
 
@@ -26,8 +27,8 @@ class Video(Base):
     __tablename__ = "videos"
     
     # Primary identification
-    id: Mapped[UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid4)
-    user_id: Mapped[UUID] = mapped_column(UUID(as_uuid=True), ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
+    id: Mapped[UUID] = mapped_column(UUIDType(), primary_key=True, default=uuid4)
+    user_id: Mapped[UUID] = mapped_column(UUIDType(), ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
     
     # Basic video information
     title: Mapped[str] = mapped_column(String(300), nullable=False, index=True)
@@ -54,7 +55,7 @@ class Video(Base):
     
     # Content categorization
     category: Mapped[Optional[str]] = mapped_column(String(100), nullable=True, index=True)
-    tags: Mapped[List[str]] = mapped_column(ARRAY(String), nullable=False, default=list)
+    tags: Mapped[List[str]] = mapped_column(ArrayType(), nullable=False, default=list)
     language: Mapped[str] = mapped_column(String(10), default="en", nullable=False, index=True)
     
     # Processing status
@@ -71,7 +72,7 @@ class Video(Base):
     # Visibility and permissions
     visibility: Mapped[str] = mapped_column(String(20), default="private", nullable=False, index=True)
     is_original: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False)
-    parent_video_id: Mapped[Optional[UUID]] = mapped_column(UUID(as_uuid=True), ForeignKey("videos.id"), nullable=True)
+    parent_video_id: Mapped[Optional[UUID]] = mapped_column(UUIDType(), ForeignKey("videos.id"), nullable=True)
     
     # Analytics and engagement
     view_count: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
@@ -79,10 +80,10 @@ class Video(Base):
     last_accessed_at: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True), nullable=True)
     
     # Timestamps
-    uploaded_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now(), nullable=False)
+    uploaded_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=get_timestamp_server_default(), nullable=False)
     processed_at: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True), nullable=True)
-    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now(), nullable=False)
-    updated_at: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True), onupdate=func.now(), nullable=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=get_timestamp_server_default(), nullable=False)
+    updated_at: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True), onupdate=get_timestamp_server_default(), nullable=True)
     deleted_at: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True), nullable=True)
     
     # Relationships
@@ -159,8 +160,8 @@ class VideoProcessingJob(Base):
     __tablename__ = "video_processing_jobs"
     
     # Primary identification
-    id: Mapped[UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid4)
-    video_id: Mapped[UUID] = mapped_column(UUID(as_uuid=True), ForeignKey("videos.id", ondelete="CASCADE"), nullable=False)
+    id: Mapped[UUID] = mapped_column(UUIDType(), primary_key=True, default=uuid4)
+    video_id: Mapped[UUID] = mapped_column(UUIDType(), ForeignKey("videos.id", ondelete="CASCADE"), nullable=False)
     
     # Job information
     job_type: Mapped[str] = mapped_column(String(50), nullable=False, index=True)
@@ -191,8 +192,8 @@ class VideoProcessingJob(Base):
     completed_at: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True), nullable=True)
     
     # Timestamps
-    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now(), nullable=False)
-    updated_at: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True), onupdate=func.now(), nullable=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=get_timestamp_server_default(), nullable=False)
+    updated_at: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True), onupdate=get_timestamp_server_default(), nullable=True)
     
     # Relationships
     video: Mapped["Video"] = relationship("Video", back_populates="processing_jobs")
@@ -236,8 +237,8 @@ class VideoFile(Base):
     __tablename__ = "video_files"
     
     # Primary identification
-    id: Mapped[UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid4)
-    video_id: Mapped[UUID] = mapped_column(UUID(as_uuid=True), ForeignKey("videos.id", ondelete="CASCADE"), nullable=False)
+    id: Mapped[UUID] = mapped_column(UUIDType(), primary_key=True, default=uuid4)
+    video_id: Mapped[UUID] = mapped_column(UUIDType(), ForeignKey("videos.id", ondelete="CASCADE"), nullable=False)
     
     # File information
     file_type: Mapped[str] = mapped_column(String(50), nullable=False, index=True)  # original, processed, thumbnail, etc.
@@ -265,8 +266,8 @@ class VideoFile(Base):
     quality_metrics: Mapped[Optional[dict]] = mapped_column(JSON, nullable=True)
     
     # Timestamps
-    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now(), nullable=False)
-    updated_at: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True), onupdate=func.now(), nullable=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=get_timestamp_server_default(), nullable=False)
+    updated_at: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True), onupdate=get_timestamp_server_default(), nullable=True)
     last_accessed_at: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True), nullable=True)
     
     # Relationships
@@ -292,8 +293,8 @@ class VideoAnalytics(Base):
     __tablename__ = "video_analytics"
     
     # Primary identification
-    id: Mapped[UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid4)
-    video_id: Mapped[UUID] = mapped_column(UUID(as_uuid=True), ForeignKey("videos.id", ondelete="CASCADE"), nullable=False)
+    id: Mapped[UUID] = mapped_column(UUIDType(), primary_key=True, default=uuid4)
+    video_id: Mapped[UUID] = mapped_column(UUIDType(), ForeignKey("videos.id", ondelete="CASCADE"), nullable=False)
     
     # Time period for metrics
     date: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False, index=True)
@@ -329,8 +330,8 @@ class VideoAnalytics(Base):
     platform_metrics: Mapped[Optional[dict]] = mapped_column(JSON, nullable=True)
     
     # Timestamps
-    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now(), nullable=False)
-    updated_at: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True), onupdate=func.now(), nullable=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=get_timestamp_server_default(), nullable=False)
+    updated_at: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True), onupdate=get_timestamp_server_default(), nullable=True)
     
     # Relationships
     video: Mapped["Video"] = relationship("Video", back_populates="analytics")

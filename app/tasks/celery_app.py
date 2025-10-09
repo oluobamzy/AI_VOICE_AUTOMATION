@@ -1,13 +1,17 @@
 """
 Celery application configuration.
 
-This module configures Celery for async task processing
-with proper error handling and monitoring.
+This module sets up the Celery application with Redis backend,
+task routing, and monitoring configuration for the AI video automation pipeline.
 """
 
 from celery import Celery
+from celery.signals import task_failure, task_success, worker_ready, worker_shutdown
 
 from app.core.config import settings
+from app.core.logging import get_logger
+
+logger = get_logger(__name__)
 
 # Create Celery instance
 celery_app = Celery(
@@ -65,4 +69,56 @@ celery_app.conf.beat_schedule = {
         "task": "app.tasks.video_tasks.health_check_task",
         "schedule": 300.0,  # Run every 5 minutes
     },
+    "cleanup-published-files": {
+        "task": "app.tasks.publishing_tasks.cleanup_published_files_task",
+        "schedule": 86400.0,  # Run daily
+        "kwargs": {"retention_days": 7}
+    },
+    "cleanup-workflow-artifacts": {
+        "task": "app.tasks.workflow_tasks.cleanup_workflow_artifacts",
+        "schedule": 43200.0,  # Run twice daily
+        "kwargs": {"cleanup_after_days": 3}
+    }
 }
+
+# Error and event handling
+@celery_app.task(bind=True)
+def debug_task(self):
+    """Debug task for testing Celery setup."""
+    logger.info(f"Request: {self.request!r}")
+    return {"status": "debug_task_completed", "worker": self.request.hostname}
+
+
+# Task failure handler
+@task_failure.connect
+def task_failure_handler(sender=None, task_id=None, exception=None, traceback=None, einfo=None, **kwargs):
+    """Handle task failures globally."""
+    logger.error(f"Task {task_id} failed: {exception}")
+    logger.error(f"Traceback: {traceback}")
+    
+    # TODO: Implement failure notifications
+    # Could send email, Slack notification, etc.
+
+
+# Task success handler
+@task_success.connect
+def task_success_handler(sender=None, task_id=None, result=None, **kwargs):
+    """Handle task success globally."""
+    logger.info(f"Task {task_id} completed successfully")
+    
+    # TODO: Implement success tracking
+    # Could update database, send notifications, etc.
+
+
+# Worker ready handler
+@worker_ready.connect
+def worker_ready_handler(sender=None, **kwargs):
+    """Handle worker ready event."""
+    logger.info(f"Worker {sender.hostname} is ready")
+
+
+# Worker shutdown handler
+@worker_shutdown.connect
+def worker_shutdown_handler(sender=None, **kwargs):
+    """Handle worker shutdown event."""
+    logger.info(f"Worker {sender.hostname} is shutting down")

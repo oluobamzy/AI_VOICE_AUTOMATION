@@ -13,7 +13,8 @@ from sqlalchemy import (
     Boolean, DateTime, String, Text, Integer, Float, JSON,
     ForeignKey, Index, UniqueConstraint, CheckConstraint
 )
-from sqlalchemy.dialects.postgresql import UUID, ARRAY
+from sqlalchemy.dialects.postgresql import UUID
+from app.db.types import ArrayType, UUIDType, get_timestamp_server_default
 from sqlalchemy.orm import relationship, Mapped, mapped_column
 from sqlalchemy.sql import func
 
@@ -26,7 +27,7 @@ class User(Base):
     __tablename__ = "users"
     
     # Primary identification
-    id: Mapped[UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid4)
+    id: Mapped[UUID] = mapped_column(UUIDType(), primary_key=True, default=uuid4)
     email: Mapped[str] = mapped_column(String(255), unique=True, nullable=False, index=True)
     username: Mapped[str] = mapped_column(String(50), unique=True, nullable=False, index=True)
     
@@ -59,8 +60,8 @@ class User(Base):
     credits_used: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
     
     # Timestamps
-    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now(), nullable=False)
-    updated_at: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True), onupdate=func.now(), nullable=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=get_timestamp_server_default(), nullable=False)
+    updated_at: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True), onupdate=get_timestamp_server_default(), nullable=True)
     deleted_at: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True), nullable=True)
     
     # Relationships
@@ -127,8 +128,8 @@ class UserPreferences(Base):
     __tablename__ = "user_preferences"
     
     # Primary identification
-    id: Mapped[UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid4)
-    user_id: Mapped[UUID] = mapped_column(UUID(as_uuid=True), ForeignKey("users.id", ondelete="CASCADE"), nullable=False, unique=True)
+    id: Mapped[UUID] = mapped_column(UUIDType(), primary_key=True, default=uuid4)
+    user_id: Mapped[UUID] = mapped_column(UUIDType(), ForeignKey("users.id", ondelete="CASCADE"), nullable=False, unique=True)
     
     # Notification preferences
     email_notifications: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False)
@@ -155,8 +156,8 @@ class UserPreferences(Base):
     custom_settings: Mapped[Optional[dict]] = mapped_column(JSON, nullable=True)
     
     # Timestamps
-    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now(), nullable=False)
-    updated_at: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True), onupdate=func.now(), nullable=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=get_timestamp_server_default(), nullable=False)
+    updated_at: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True), onupdate=get_timestamp_server_default(), nullable=True)
     
     # Relationships
     user: Mapped["User"] = relationship("User", back_populates="preferences")
@@ -177,8 +178,8 @@ class ApiKey(Base):
     __tablename__ = "api_keys"
     
     # Primary identification
-    id: Mapped[UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid4)
-    user_id: Mapped[UUID] = mapped_column(UUID(as_uuid=True), ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
+    id: Mapped[UUID] = mapped_column(UUIDType(), primary_key=True, default=uuid4)
+    user_id: Mapped[UUID] = mapped_column(UUIDType(), ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
     
     # Key information
     name: Mapped[str] = mapped_column(String(100), nullable=False)
@@ -186,7 +187,7 @@ class ApiKey(Base):
     prefix: Mapped[str] = mapped_column(String(10), nullable=False)  # For display purposes
     
     # Permissions and scope
-    scopes: Mapped[List[str]] = mapped_column(ARRAY(String), nullable=False, default=list)
+    scopes: Mapped[List[str]] = mapped_column(ArrayType(), nullable=False, default=list)
     is_active: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False)
     
     # Usage tracking
@@ -198,8 +199,8 @@ class ApiKey(Base):
     expires_at: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True), nullable=True)
     
     # Timestamps
-    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now(), nullable=False)
-    updated_at: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True), onupdate=func.now(), nullable=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=get_timestamp_server_default(), nullable=False)
+    updated_at: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True), onupdate=get_timestamp_server_default(), nullable=True)
     
     # Relationships
     user: Mapped["User"] = relationship("User", back_populates="api_keys")
@@ -238,8 +239,8 @@ class PasswordReset(Base):
     __tablename__ = "password_resets"
     
     # Primary identification
-    id: Mapped[UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid4)
-    user_id: Mapped[UUID] = mapped_column(UUID(as_uuid=True), ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
+    id: Mapped[UUID] = mapped_column(UUIDType(), primary_key=True, default=uuid4)
+    user_id: Mapped[UUID] = mapped_column(UUIDType(), ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
     
     # Token information
     token_hash: Mapped[str] = mapped_column(String(255), nullable=False, unique=True, index=True)
@@ -252,7 +253,7 @@ class PasswordReset(Base):
     user_agent: Mapped[Optional[str]] = mapped_column(String(500), nullable=True)
     
     # Timestamps
-    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now(), nullable=False)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=get_timestamp_server_default(), nullable=False)
     
     # Relationships
     user: Mapped["User"] = relationship("User")
@@ -291,8 +292,8 @@ class UserSession(Base):
     __tablename__ = "user_sessions"
     
     # Primary identification
-    id: Mapped[UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid4)
-    user_id: Mapped[UUID] = mapped_column(UUID(as_uuid=True), ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
+    id: Mapped[UUID] = mapped_column(UUIDType(), primary_key=True, default=uuid4)
+    user_id: Mapped[UUID] = mapped_column(UUIDType(), ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
     
     # Session information
     session_token: Mapped[str] = mapped_column(String(255), nullable=False, unique=True, index=True)
@@ -303,14 +304,14 @@ class UserSession(Base):
     # Session state
     is_active: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False)
     expires_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
-    last_activity_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now(), nullable=False)
+    last_activity_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=get_timestamp_server_default(), nullable=False)
     
     # Geographic information
     country: Mapped[Optional[str]] = mapped_column(String(2), nullable=True)  # ISO country code
     city: Mapped[Optional[str]] = mapped_column(String(100), nullable=True)
     
     # Timestamps
-    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now(), nullable=False)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=get_timestamp_server_default(), nullable=False)
     ended_at: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True), nullable=True)
     
     # Relationships

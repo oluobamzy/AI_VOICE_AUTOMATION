@@ -9,7 +9,7 @@ from datetime import datetime
 from typing import Optional, List, Dict, Any, Union
 from uuid import UUID
 
-from pydantic import BaseModel, Field, validator, HttpUrl
+from pydantic import BaseModel, Field, field_validator, HttpUrl
 
 
 class TranscriptionBase(BaseModel):
@@ -17,7 +17,12 @@ class TranscriptionBase(BaseModel):
     language: str = Field(default="en", description="Language code for transcription")
     audio_file_path: str = Field(..., description="Path to audio file")
     
-    @validator("language")
+    @field_validator("language")
+
+    
+    @classmethod
+
+    
     def validate_language(cls, v):
         # Common language codes supported by Whisper
         supported_languages = [
@@ -36,7 +41,12 @@ class TranscriptionCreate(TranscriptionBase):
     prompt: Optional[str] = Field(None, max_length=500, description="Optional prompt for context")
     temperature: float = Field(default=0.0, ge=0.0, le=1.0, description="Sampling temperature")
     
-    @validator("model")
+    @field_validator("model")
+
+    
+    @classmethod
+
+    
     def validate_model(cls, v):
         allowed_models = ["whisper-1", "whisper-large", "whisper-base"]
         if v not in allowed_models:
@@ -51,7 +61,12 @@ class TranscriptionSegment(BaseModel):
     text: str = Field(..., description="Transcribed text for this segment")
     confidence: Optional[float] = Field(None, ge=0, le=1, description="Confidence score")
     
-    @validator("end")
+    @field_validator("end")
+
+    
+    @classmethod
+
+    
     def validate_end_after_start(cls, v, values):
         if 'start' in values and v <= values['start']:
             raise ValueError("End time must be after start time")
@@ -80,7 +95,12 @@ class ScriptBase(BaseModel):
     content: str = Field(..., min_length=1, description="Script content")
     language: str = Field(default="en", description="Script language")
     
-    @validator("content")
+    @field_validator("content")
+
+    
+    @classmethod
+
+    
     def validate_content_length(cls, v):
         if len(v.strip()) == 0:
             raise ValueError("Script content cannot be empty")
@@ -107,7 +127,12 @@ class ScriptRewriteRequest(BaseModel):
     avoid_words: List[str] = Field(default_factory=list, max_items=10, description="Words to avoid")
     custom_instructions: Optional[str] = Field(None, max_length=500, description="Custom rewriting instructions")
     
-    @validator("style")
+    @field_validator("style")
+
+    
+    @classmethod
+
+    
     def validate_style(cls, v):
         allowed_styles = [
             "engaging", "professional", "casual", "educational", "entertaining",
@@ -117,7 +142,12 @@ class ScriptRewriteRequest(BaseModel):
             raise ValueError(f"Style must be one of: {', '.join(allowed_styles)}")
         return v
     
-    @validator("target_audience")
+    @field_validator("target_audience")
+
+    
+    @classmethod
+
+    
     def validate_audience(cls, v):
         allowed_audiences = [
             "general", "teens", "young_adults", "adults", "seniors",
@@ -127,7 +157,12 @@ class ScriptRewriteRequest(BaseModel):
             raise ValueError(f"Target audience must be one of: {', '.join(allowed_audiences)}")
         return v
     
-    @validator("tone")
+    @field_validator("tone")
+
+    
+    @classmethod
+
+    
     def validate_tone(cls, v):
         allowed_tones = [
             "friendly", "professional", "humorous", "serious", "inspirational",
@@ -137,7 +172,12 @@ class ScriptRewriteRequest(BaseModel):
             raise ValueError(f"Tone must be one of: {', '.join(allowed_tones)}")
         return v
     
-    @validator("length_preference")
+    @field_validator("length_preference")
+
+    
+    @classmethod
+
+    
     def validate_length(cls, v):
         allowed_lengths = ["shorter", "maintain", "longer", "specific"]
         if v not in allowed_lengths:
@@ -191,14 +231,24 @@ class TTSRequest(BaseModel):
     model: str = Field(default="eleven_monolingual_v1", description="TTS model to use")
     output_format: str = Field(default="mp3", description="Output audio format")
     
-    @validator("text")
+    @field_validator("text")
+
+    
+    @classmethod
+
+    
     def validate_text_content(cls, v):
         if len(v.strip()) == 0:
             raise ValueError("Text cannot be empty")
         # Remove excessive whitespace
         return ' '.join(v.split())
     
-    @validator("output_format")
+    @field_validator("output_format")
+
+    
+    @classmethod
+
+    
     def validate_output_format(cls, v):
         allowed_formats = ["mp3", "wav", "ogg", "flac"]
         if v not in allowed_formats:
@@ -241,14 +291,24 @@ class ContentAnalysis(BaseModel):
     average_sentence_length: float = Field(..., ge=0, description="Average sentence length")
     created_at: datetime = Field(..., description="Analysis timestamp")
     
-    @validator("sentiment")
+    @field_validator("sentiment")
+
+    
+    @classmethod
+
+    
     def validate_sentiment(cls, v):
         allowed_sentiments = ["positive", "negative", "neutral", "mixed"]
         if v not in allowed_sentiments:
             raise ValueError(f"Sentiment must be one of: {', '.join(allowed_sentiments)}")
         return v
     
-    @validator("complexity_level")
+    @field_validator("complexity_level")
+
+    
+    @classmethod
+
+    
     def validate_complexity(cls, v):
         allowed_levels = ["elementary", "middle_school", "high_school", "college", "graduate"]
         if v not in allowed_levels:
@@ -266,7 +326,12 @@ class HashtagGeneration(BaseModel):
     platform: str = Field(default="general", description="Target platform")
     include_trending: bool = Field(default=True, description="Include trending hashtags")
     
-    @validator("platform")
+    @field_validator("platform")
+
+    
+    @classmethod
+
+    
     def validate_platform(cls, v):
         allowed_platforms = ["general", "instagram", "tiktok", "twitter", "youtube", "linkedin"]
         if v not in allowed_platforms:

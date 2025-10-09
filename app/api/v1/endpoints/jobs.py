@@ -47,6 +47,7 @@ async def create_job(
         id="placeholder-job-id",
         job_type=job_data.job_type,
         status="queued",
+        priority=job_data.priority,
         created_at="2025-09-30T00:00:00Z"
     )
 
@@ -77,6 +78,7 @@ async def get_job(
         id=str(job_id),
         job_type="video_processing",
         status="running",
+        priority=5,
         created_at="2025-09-30T00:00:00Z"
     )
 
@@ -143,12 +145,14 @@ async def list_jobs(
             id="sample-job-1",
             job_type="video_processing",
             status="completed",
+            priority=5,
             created_at="2025-09-30T00:00:00Z"
         ),
         JobResponse(
             id="sample-job-2",
             job_type="publishing",
             status="running",
+            priority=3,
             created_at="2025-09-30T00:15:00Z"
         )
     ]

@@ -9,7 +9,7 @@ from datetime import datetime
 from typing import Optional, List, Dict, Any, Union
 from uuid import UUID
 
-from pydantic import BaseModel, Field, validator, HttpUrl
+from pydantic import BaseModel, Field, field_validator, HttpUrl
 
 
 class AvatarBase(BaseModel):
@@ -19,14 +19,24 @@ class AvatarBase(BaseModel):
     age_range: str = Field(..., description="Avatar age range")
     ethnicity: Optional[str] = Field(None, description="Avatar ethnicity")
     
-    @validator("gender")
+    @field_validator("gender")
+
+    
+    @classmethod
+
+    
     def validate_gender(cls, v):
         allowed_genders = ["male", "female", "non-binary", "other"]
         if v not in allowed_genders:
             raise ValueError(f"Gender must be one of: {', '.join(allowed_genders)}")
         return v
     
-    @validator("age_range")
+    @field_validator("age_range")
+
+    
+    @classmethod
+
+    
     def validate_age_range(cls, v):
         allowed_ranges = ["child", "teen", "young_adult", "adult", "middle_aged", "senior"]
         if v not in allowed_ranges:
@@ -42,7 +52,12 @@ class AvatarCreate(AvatarBase):
     custom_features: Optional[Dict[str, Any]] = Field(None, description="Custom avatar features")
     reference_image_url: Optional[HttpUrl] = Field(None, description="Reference image URL")
     
-    @validator("style")
+    @field_validator("style")
+
+    
+    @classmethod
+
+    
     def validate_style(cls, v):
         allowed_styles = [
             "realistic", "cartoon", "anime", "artistic", "professional",
@@ -97,7 +112,12 @@ class VideoGenerationRequest(BaseModel):
     video_settings: VideoGenerationSettings = Field(..., description="Video generation settings")
     background: Optional[str] = Field(None, description="Background setting")
     
-    @validator("text")
+    @field_validator("text")
+
+    
+    @classmethod
+
+    
     def text_or_script_required(cls, v, values):
         if not v and "script_id" not in values:
             raise ValueError("Either text or script_id must be provided")
@@ -114,7 +134,12 @@ class VideoGenerationSettings(BaseModel):
     codec: str = Field(default="h264", description="Video codec")
     bitrate: Optional[str] = Field(None, description="Video bitrate")
     
-    @validator("resolution")
+    @field_validator("resolution")
+
+    
+    @classmethod
+
+    
     def validate_resolution(cls, v):
         allowed_resolutions = [
             "720p", "1080p", "1440p", "4k", "480p", "360p",
@@ -124,21 +149,36 @@ class VideoGenerationSettings(BaseModel):
             raise ValueError(f"Resolution must be one of: {', '.join(allowed_resolutions)}")
         return v
     
-    @validator("aspect_ratio")
+    @field_validator("aspect_ratio")
+
+    
+    @classmethod
+
+    
     def validate_aspect_ratio(cls, v):
         allowed_ratios = ["16:9", "4:3", "1:1", "9:16", "21:9", "2:3"]
         if v not in allowed_ratios:
             raise ValueError(f"Aspect ratio must be one of: {', '.join(allowed_ratios)}")
         return v
     
-    @validator("quality")
+    @field_validator("quality")
+
+    
+    @classmethod
+
+    
     def validate_quality(cls, v):
         allowed_qualities = ["low", "medium", "high", "ultra", "draft"]
         if v not in allowed_qualities:
             raise ValueError(f"Quality must be one of: {', '.join(allowed_qualities)}")
         return v
     
-    @validator("codec")
+    @field_validator("codec")
+
+    
+    @classmethod
+
+    
     def validate_codec(cls, v):
         allowed_codecs = ["h264", "h265", "vp9", "av1", "prores"]
         if v not in allowed_codecs:
@@ -185,14 +225,24 @@ class VideoGenerationJob(BaseModel):
     started_at: Optional[datetime] = Field(None, description="Job start timestamp")
     completed_at: Optional[datetime] = Field(None, description="Job completion timestamp")
     
-    @validator("type")
+    @field_validator("type")
+
+    
+    @classmethod
+
+    
     def validate_type(cls, v):
         allowed_types = ["avatar_video", "script_video", "custom_video", "bulk_video"]
         if v not in allowed_types:
             raise ValueError(f"Type must be one of: {', '.join(allowed_types)}")
         return v
     
-    @validator("status")
+    @field_validator("status")
+
+    
+    @classmethod
+
+    
     def validate_status(cls, v):
         allowed_statuses = [
             "pending", "queued", "processing", "rendering", "completed", 
@@ -202,7 +252,12 @@ class VideoGenerationJob(BaseModel):
             raise ValueError(f"Status must be one of: {', '.join(allowed_statuses)}")
         return v
     
-    @validator("provider")
+    @field_validator("provider")
+
+    
+    @classmethod
+
+    
     def validate_provider(cls, v):
         allowed_providers = ["d-id", "synthesia", "heygen", "custom", "internal"]
         if v not in allowed_providers:
@@ -261,7 +316,12 @@ class VoiceCloning(BaseModel):
     quality: str = Field(default="high", description="Cloning quality")
     training_duration: Optional[int] = Field(None, ge=60, description="Training duration in seconds")
     
-    @validator("quality")
+    @field_validator("quality")
+
+    
+    @classmethod
+
+    
     def validate_quality(cls, v):
         allowed_qualities = ["draft", "standard", "high", "premium"]
         if v not in allowed_qualities:
@@ -296,7 +356,12 @@ class BatchVideoGeneration(BaseModel):
     priority: str = Field(default="normal", description="Processing priority")
     webhook_url: Optional[HttpUrl] = Field(None, description="Completion webhook URL")
     
-    @validator("priority")
+    @field_validator("priority")
+
+    
+    @classmethod
+
+    
     def validate_priority(cls, v):
         allowed_priorities = ["low", "normal", "high", "urgent"]
         if v not in allowed_priorities:
@@ -319,7 +384,12 @@ class BatchVideoResponse(BaseModel):
     created_at: datetime = Field(..., description="Creation timestamp")
     updated_at: Optional[datetime] = Field(None, description="Last update timestamp")
     
-    @validator("status")
+    @field_validator("status")
+
+    
+    @classmethod
+
+    
     def validate_batch_status(cls, v):
         allowed_statuses = [
             "pending", "processing", "completed", "partially_completed", 

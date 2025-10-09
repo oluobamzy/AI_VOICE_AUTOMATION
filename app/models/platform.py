@@ -5,7 +5,8 @@ This module defines SQLAlchemy models for multi-platform publishing,
 social media integration, analytics, and performance tracking.
 """
 
-from datetime import datetime, date, timedelta
+from datetime import datetime, timedelta
+from datetime import date as DateType
 from typing import Optional, List
 from uuid import uuid4
 
@@ -13,7 +14,8 @@ from sqlalchemy import (
     Boolean, DateTime, String, Text, Integer, Float, JSON, Date,
     ForeignKey, Index, UniqueConstraint, CheckConstraint
 )
-from sqlalchemy.dialects.postgresql import UUID, ARRAY
+from sqlalchemy.dialects.postgresql import UUID
+from app.db.types import ArrayType, UUIDType, get_timestamp_server_default
 from sqlalchemy.orm import relationship, Mapped, mapped_column
 from sqlalchemy.sql import func
 
@@ -26,8 +28,8 @@ class PlatformCredentials(Base):
     __tablename__ = "platform_credentials"
     
     # Primary identification
-    id: Mapped[UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid4)
-    user_id: Mapped[UUID] = mapped_column(UUID(as_uuid=True), ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
+    id: Mapped[UUID] = mapped_column(UUIDType(), primary_key=True, default=uuid4)
+    user_id: Mapped[UUID] = mapped_column(UUIDType(), ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
     
     # Platform information
     platform: Mapped[str] = mapped_column(String(50), nullable=False, index=True)
@@ -45,7 +47,7 @@ class PlatformCredentials(Base):
     refresh_expires_at: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True), nullable=True)
     
     # Permissions and scopes
-    scopes: Mapped[List[str]] = mapped_column(ARRAY(String), nullable=False, default=list)
+    scopes: Mapped[List[str]] = mapped_column(ArrayType(), nullable=False, default=list)
     permissions: Mapped[Optional[dict]] = mapped_column(JSON, nullable=True)
     
     # Status and validation
@@ -63,8 +65,8 @@ class PlatformCredentials(Base):
     last_error_message: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
     
     # Timestamps
-    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now(), nullable=False)
-    updated_at: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True), onupdate=func.now(), nullable=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=get_timestamp_server_default(), nullable=False)
+    updated_at: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True), onupdate=get_timestamp_server_default(), nullable=True)
     
     # Relationships
     user: Mapped["User"] = relationship("User", back_populates="platform_credentials")
@@ -106,9 +108,9 @@ class PublishingProfile(Base):
     __tablename__ = "publishing_profiles"
     
     # Primary identification
-    id: Mapped[UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid4)
-    user_id: Mapped[UUID] = mapped_column(UUID(as_uuid=True), ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
-    credentials_id: Mapped[UUID] = mapped_column(UUID(as_uuid=True), ForeignKey("platform_credentials.id", ondelete="CASCADE"), nullable=False)
+    id: Mapped[UUID] = mapped_column(UUIDType(), primary_key=True, default=uuid4)
+    user_id: Mapped[UUID] = mapped_column(UUIDType(), ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
+    credentials_id: Mapped[UUID] = mapped_column(UUIDType(), ForeignKey("platform_credentials.id", ondelete="CASCADE"), nullable=False)
     
     # Profile information
     name: Mapped[str] = mapped_column(String(100), nullable=False, index=True)
@@ -123,8 +125,8 @@ class PublishingProfile(Base):
     # Publishing configuration
     default_privacy: Mapped[str] = mapped_column(String(20), default="public", nullable=False)
     default_category: Mapped[Optional[str]] = mapped_column(String(100), nullable=True)
-    default_tags: Mapped[List[str]] = mapped_column(ARRAY(String), nullable=False, default=list)
-    default_hashtags: Mapped[List[str]] = mapped_column(ARRAY(String), nullable=False, default=list)
+    default_tags: Mapped[List[str]] = mapped_column(ArrayType(), nullable=False, default=list)
+    default_hashtags: Mapped[List[str]] = mapped_column(ArrayType(), nullable=False, default=list)
     
     # Content optimization
     title_template: Mapped[Optional[str]] = mapped_column(String(500), nullable=True)
@@ -158,8 +160,8 @@ class PublishingProfile(Base):
     last_used_at: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True), nullable=True)
     
     # Timestamps
-    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now(), nullable=False)
-    updated_at: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True), onupdate=func.now(), nullable=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=get_timestamp_server_default(), nullable=False)
+    updated_at: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True), onupdate=get_timestamp_server_default(), nullable=True)
     
     # Relationships
     user: Mapped["User"] = relationship("User", back_populates="publishing_profiles")
@@ -186,11 +188,11 @@ class PublishJob(Base):
     __tablename__ = "publish_jobs"
     
     # Primary identification
-    id: Mapped[UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid4)
-    user_id: Mapped[UUID] = mapped_column(UUID(as_uuid=True), ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
-    video_id: Mapped[UUID] = mapped_column(UUID(as_uuid=True), ForeignKey("videos.id", ondelete="CASCADE"), nullable=False)
-    profile_id: Mapped[UUID] = mapped_column(UUID(as_uuid=True), ForeignKey("publishing_profiles.id", ondelete="CASCADE"), nullable=False)
-    credentials_id: Mapped[UUID] = mapped_column(UUID(as_uuid=True), ForeignKey("platform_credentials.id", ondelete="CASCADE"), nullable=False)
+    id: Mapped[UUID] = mapped_column(UUIDType(), primary_key=True, default=uuid4)
+    user_id: Mapped[UUID] = mapped_column(UUIDType(), ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
+    video_id: Mapped[UUID] = mapped_column(UUIDType(), ForeignKey("videos.id", ondelete="CASCADE"), nullable=False)
+    profile_id: Mapped[UUID] = mapped_column(UUIDType(), ForeignKey("publishing_profiles.id", ondelete="CASCADE"), nullable=False)
+    credentials_id: Mapped[UUID] = mapped_column(UUIDType(), ForeignKey("platform_credentials.id", ondelete="CASCADE"), nullable=False)
     
     # Job information
     platform: Mapped[str] = mapped_column(String(50), nullable=False, index=True)
@@ -200,8 +202,8 @@ class PublishJob(Base):
     # Content metadata
     title: Mapped[str] = mapped_column(String(500), nullable=False)
     description: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
-    tags: Mapped[List[str]] = mapped_column(ARRAY(String), nullable=False, default=list)
-    hashtags: Mapped[List[str]] = mapped_column(ARRAY(String), nullable=False, default=list)
+    tags: Mapped[List[str]] = mapped_column(ArrayType(), nullable=False, default=list)
+    hashtags: Mapped[List[str]] = mapped_column(ArrayType(), nullable=False, default=list)
     category: Mapped[Optional[str]] = mapped_column(String(100), nullable=True)
     
     # Publishing settings
@@ -235,8 +237,8 @@ class PublishJob(Base):
     initial_engagement: Mapped[Optional[dict]] = mapped_column(JSON, nullable=True)
     
     # Timestamps
-    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now(), nullable=False)
-    updated_at: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True), onupdate=func.now(), nullable=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=get_timestamp_server_default(), nullable=False)
+    updated_at: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True), onupdate=get_timestamp_server_default(), nullable=True)
     
     # Relationships
     user: Mapped["User"] = relationship("User")
@@ -279,10 +281,10 @@ class ScheduledPost(Base):
     __tablename__ = "scheduled_posts"
     
     # Primary identification
-    id: Mapped[UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid4)
-    user_id: Mapped[UUID] = mapped_column(UUID(as_uuid=True), ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
-    video_id: Mapped[UUID] = mapped_column(UUID(as_uuid=True), ForeignKey("videos.id", ondelete="CASCADE"), nullable=False)
-    profile_id: Mapped[UUID] = mapped_column(UUID(as_uuid=True), ForeignKey("publishing_profiles.id", ondelete="CASCADE"), nullable=False)
+    id: Mapped[UUID] = mapped_column(UUIDType(), primary_key=True, default=uuid4)
+    user_id: Mapped[UUID] = mapped_column(UUIDType(), ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
+    video_id: Mapped[UUID] = mapped_column(UUIDType(), ForeignKey("videos.id", ondelete="CASCADE"), nullable=False)
+    profile_id: Mapped[UUID] = mapped_column(UUIDType(), ForeignKey("publishing_profiles.id", ondelete="CASCADE"), nullable=False)
     
     # Scheduling information
     scheduled_time: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False, index=True)
@@ -291,8 +293,8 @@ class ScheduledPost(Base):
     # Content metadata
     title: Mapped[str] = mapped_column(String(500), nullable=False)
     description: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
-    tags: Mapped[List[str]] = mapped_column(ARRAY(String), nullable=False, default=list)
-    hashtags: Mapped[List[str]] = mapped_column(ARRAY(String), nullable=False, default=list)
+    tags: Mapped[List[str]] = mapped_column(ArrayType(), nullable=False, default=list)
+    hashtags: Mapped[List[str]] = mapped_column(ArrayType(), nullable=False, default=list)
     
     # Publishing configuration
     privacy_setting: Mapped[str] = mapped_column(String(20), default="public", nullable=False)
@@ -307,12 +309,12 @@ class ScheduledPost(Base):
     next_occurrence: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True), nullable=True)
     
     # Execution tracking
-    publish_job_id: Mapped[Optional[UUID]] = mapped_column(UUID(as_uuid=True), ForeignKey("publish_jobs.id"), nullable=True)
+    publish_job_id: Mapped[Optional[UUID]] = mapped_column(UUIDType(), ForeignKey("publish_jobs.id"), nullable=True)
     executed_at: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True), nullable=True)
     
     # Timestamps
-    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now(), nullable=False)
-    updated_at: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True), onupdate=func.now(), nullable=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=get_timestamp_server_default(), nullable=False)
+    updated_at: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True), onupdate=get_timestamp_server_default(), nullable=True)
     
     # Relationships
     user: Mapped["User"] = relationship("User")
@@ -337,12 +339,12 @@ class PlatformAnalytics(Base):
     __tablename__ = "platform_analytics"
     
     # Primary identification
-    id: Mapped[UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid4)
-    publish_job_id: Mapped[UUID] = mapped_column(UUID(as_uuid=True), ForeignKey("publish_jobs.id", ondelete="CASCADE"), nullable=False)
+    id: Mapped[UUID] = mapped_column(UUIDType(), primary_key=True, default=uuid4)
+    publish_job_id: Mapped[UUID] = mapped_column(UUIDType(), ForeignKey("publish_jobs.id", ondelete="CASCADE"), nullable=False)
     platform: Mapped[str] = mapped_column(String(50), nullable=False, index=True)
     
     # Time period
-    date: Mapped[date] = mapped_column(Date, nullable=False, index=True)
+    date: Mapped[DateType] = mapped_column(Date, nullable=False, index=True)
     period_type: Mapped[str] = mapped_column(String(20), default="daily", nullable=False)
     
     # Engagement metrics
@@ -395,8 +397,8 @@ class PlatformAnalytics(Base):
     collected_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
     
     # Timestamps
-    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now(), nullable=False)
-    updated_at: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True), onupdate=func.now(), nullable=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=get_timestamp_server_default(), nullable=False)
+    updated_at: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True), onupdate=get_timestamp_server_default(), nullable=True)
     
     # Relationships
     publish_job: Mapped["PublishJob"] = relationship("PublishJob", back_populates="analytics")
@@ -445,7 +447,7 @@ class TrendingContent(Base):
     __tablename__ = "trending_content"
     
     # Primary identification
-    id: Mapped[UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid4)
+    id: Mapped[UUID] = mapped_column(UUIDType(), primary_key=True, default=uuid4)
     platform: Mapped[str] = mapped_column(String(50), nullable=False, index=True)
     
     # Content identification
@@ -461,8 +463,8 @@ class TrendingContent(Base):
     
     # Content metadata
     category: Mapped[Optional[str]] = mapped_column(String(100), nullable=True)
-    tags: Mapped[List[str]] = mapped_column(ARRAY(String), nullable=False, default=list)
-    hashtags: Mapped[List[str]] = mapped_column(ARRAY(String), nullable=False, default=list)
+    tags: Mapped[List[str]] = mapped_column(ArrayType(), nullable=False, default=list)
+    hashtags: Mapped[List[str]] = mapped_column(ArrayType(), nullable=False, default=list)
     duration: Mapped[Optional[float]] = mapped_column(Float, nullable=True)
     
     # Trending metrics
@@ -487,8 +489,8 @@ class TrendingContent(Base):
     analysis_confidence: Mapped[float] = mapped_column(Float, nullable=False)  # 0-1
     
     # Timestamps
-    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now(), nullable=False)
-    updated_at: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True), onupdate=func.now(), nullable=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=get_timestamp_server_default(), nullable=False)
+    updated_at: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True), onupdate=get_timestamp_server_default(), nullable=True)
     
     # Indexes and constraints
     __table_args__ = (

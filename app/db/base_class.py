@@ -5,7 +5,7 @@ This module provides the base class for all database models
 and common database utilities.
 """
 
-from typing import Any
+from typing import Any, Dict
 from uuid import uuid4
 
 from sqlalchemy import MetaData
@@ -29,11 +29,11 @@ class Base(DeclarativeBase):
     metadata = MetaData(naming_convention=NAMING_CONVENTION)
     
     # Common methods for all models
-    def to_dict(self) -> dict[str, Any]:
+    def to_dict(self) -> Dict[str, Any]:
         """Convert model instance to dictionary."""
         return {c.name: getattr(self, c.name) for c in self.__table__.columns}
     
-    def update_from_dict(self, data: dict[str, Any]) -> None:
+    def update_from_dict(self, data: Dict[str, Any]) -> None:
         """Update model instance from dictionary."""
         for key, value in data.items():
             if hasattr(self, key):

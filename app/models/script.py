@@ -13,7 +13,8 @@ from sqlalchemy import (
     Boolean, DateTime, String, Text, Integer, Float, JSON,
     ForeignKey, Index, UniqueConstraint, CheckConstraint
 )
-from sqlalchemy.dialects.postgresql import UUID, ARRAY
+from sqlalchemy.dialects.postgresql import UUID
+from app.db.types import ArrayType, UUIDType, get_timestamp_server_default
 from sqlalchemy.orm import relationship, Mapped, mapped_column
 from sqlalchemy.sql import func
 
@@ -26,9 +27,9 @@ class Script(Base):
     __tablename__ = "scripts"
     
     # Primary identification
-    id: Mapped[UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid4)
-    user_id: Mapped[UUID] = mapped_column(UUID(as_uuid=True), ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
-    video_id: Mapped[Optional[UUID]] = mapped_column(UUID(as_uuid=True), ForeignKey("videos.id", ondelete="SET NULL"), nullable=True)
+    id: Mapped[UUID] = mapped_column(UUIDType(), primary_key=True, default=uuid4)
+    user_id: Mapped[UUID] = mapped_column(UUIDType(), ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
+    video_id: Mapped[Optional[UUID]] = mapped_column(UUIDType(), ForeignKey("videos.id", ondelete="SET NULL"), nullable=True)
     
     # Content information
     title: Mapped[Optional[str]] = mapped_column(String(300), nullable=True, index=True)
@@ -44,8 +45,8 @@ class Script(Base):
     
     # Categorization and tagging
     category: Mapped[Optional[str]] = mapped_column(String(100), nullable=True, index=True)
-    tags: Mapped[List[str]] = mapped_column(ARRAY(String), nullable=False, default=list)
-    keywords: Mapped[List[str]] = mapped_column(ARRAY(String), nullable=False, default=list)
+    tags: Mapped[List[str]] = mapped_column(ArrayType(), nullable=False, default=list)
+    keywords: Mapped[List[str]] = mapped_column(ArrayType(), nullable=False, default=list)
     
     # Style and audience settings
     style: Mapped[str] = mapped_column(String(50), default="engaging", nullable=False)
@@ -55,7 +56,7 @@ class Script(Base):
     
     # Source and transformation
     source_type: Mapped[str] = mapped_column(String(50), default="original", nullable=False, index=True)  # original, transcription, rewrite, template
-    source_id: Mapped[Optional[UUID]] = mapped_column(UUID(as_uuid=True), nullable=True)  # Reference to source (transcription, parent script, etc.)
+    source_id: Mapped[Optional[UUID]] = mapped_column(UUIDType(), nullable=True)  # Reference to source (transcription, parent script, etc.)
     transformation_type: Mapped[Optional[str]] = mapped_column(String(50), nullable=True)  # rewrite, summarize, expand, translate
     
     # Quality and analysis
@@ -66,7 +67,7 @@ class Script(Base):
     
     # Version control
     version: Mapped[int] = mapped_column(Integer, default=1, nullable=False)
-    parent_script_id: Mapped[Optional[UUID]] = mapped_column(UUID(as_uuid=True), ForeignKey("scripts.id"), nullable=True)
+    parent_script_id: Mapped[Optional[UUID]] = mapped_column(UUIDType(), ForeignKey("scripts.id"), nullable=True)
     is_template: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
     template_variables: Mapped[Optional[dict]] = mapped_column(JSON, nullable=True)
     
@@ -86,8 +87,8 @@ class Script(Base):
     last_used_at: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True), nullable=True)
     
     # Timestamps
-    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now(), nullable=False)
-    updated_at: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True), onupdate=func.now(), nullable=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=get_timestamp_server_default(), nullable=False)
+    updated_at: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True), onupdate=get_timestamp_server_default(), nullable=True)
     deleted_at: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True), nullable=True)
     
     # Relationships
@@ -154,9 +155,9 @@ class Transcription(Base):
     __tablename__ = "transcriptions"
     
     # Primary identification
-    id: Mapped[UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid4)
-    video_id: Mapped[UUID] = mapped_column(UUID(as_uuid=True), ForeignKey("videos.id", ondelete="CASCADE"), nullable=False)
-    script_id: Mapped[Optional[UUID]] = mapped_column(UUID(as_uuid=True), ForeignKey("scripts.id", ondelete="SET NULL"), nullable=True)
+    id: Mapped[UUID] = mapped_column(UUIDType(), primary_key=True, default=uuid4)
+    video_id: Mapped[UUID] = mapped_column(UUIDType(), ForeignKey("videos.id", ondelete="CASCADE"), nullable=False)
+    script_id: Mapped[Optional[UUID]] = mapped_column(UUIDType(), ForeignKey("scripts.id", ondelete="SET NULL"), nullable=True)
     
     # Audio source information
     audio_file_path: Mapped[str] = mapped_column(String(1000), nullable=False)
@@ -190,8 +191,8 @@ class Transcription(Base):
     error_message: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
     
     # Timestamps
-    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now(), nullable=False)
-    updated_at: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True), onupdate=func.now(), nullable=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=get_timestamp_server_default(), nullable=False)
+    updated_at: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True), onupdate=get_timestamp_server_default(), nullable=True)
     
     # Relationships
     video: Mapped["Video"] = relationship("Video", back_populates="transcriptions")
@@ -234,8 +235,8 @@ class TTSGeneration(Base):
     __tablename__ = "tts_generations"
     
     # Primary identification
-    id: Mapped[UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid4)
-    script_id: Mapped[UUID] = mapped_column(UUID(as_uuid=True), ForeignKey("scripts.id", ondelete="CASCADE"), nullable=False)
+    id: Mapped[UUID] = mapped_column(UUIDType(), primary_key=True, default=uuid4)
+    script_id: Mapped[UUID] = mapped_column(UUIDType(), ForeignKey("scripts.id", ondelete="CASCADE"), nullable=False)
     
     # Text and voice configuration
     text: Mapped[str] = mapped_column(Text, nullable=False)
@@ -279,8 +280,8 @@ class TTSGeneration(Base):
     last_accessed_at: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True), nullable=True)
     
     # Timestamps
-    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now(), nullable=False)
-    updated_at: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True), onupdate=func.now(), nullable=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=get_timestamp_server_default(), nullable=False)
+    updated_at: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True), onupdate=get_timestamp_server_default(), nullable=True)
     
     # Relationships
     script: Mapped["Script"] = relationship("Script", back_populates="tts_generations")
@@ -322,8 +323,8 @@ class ContentAnalysis(Base):
     __tablename__ = "content_analysis"
     
     # Primary identification
-    id: Mapped[UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid4)
-    script_id: Mapped[UUID] = mapped_column(UUID(as_uuid=True), ForeignKey("scripts.id", ondelete="CASCADE"), nullable=False, unique=True)
+    id: Mapped[UUID] = mapped_column(UUIDType(), primary_key=True, default=uuid4)
+    script_id: Mapped[UUID] = mapped_column(UUIDType(), ForeignKey("scripts.id", ondelete="CASCADE"), nullable=False, unique=True)
     
     # Content being analyzed
     content_text: Mapped[str] = mapped_column(Text, nullable=False)
@@ -332,7 +333,7 @@ class ContentAnalysis(Base):
     # Sentiment analysis
     sentiment: Mapped[str] = mapped_column(String(20), nullable=False, index=True)  # positive, negative, neutral, mixed
     sentiment_score: Mapped[float] = mapped_column(Float, nullable=False)  # -1 to 1
-    emotions: Mapped[List[str]] = mapped_column(ARRAY(String), nullable=False, default=list)
+    emotions: Mapped[List[str]] = mapped_column(ArrayType(), nullable=False, default=list)
     emotion_scores: Mapped[Optional[dict]] = mapped_column(JSON, nullable=True)
     
     # Readability analysis
@@ -348,8 +349,8 @@ class ContentAnalysis(Base):
     paragraph_count: Mapped[int] = mapped_column(Integer, nullable=False)
     
     # Topic and keyword analysis
-    key_topics: Mapped[List[str]] = mapped_column(ARRAY(String), nullable=False, default=list)
-    keywords: Mapped[List[str]] = mapped_column(ARRAY(String), nullable=False, default=list)
+    key_topics: Mapped[List[str]] = mapped_column(ArrayType(), nullable=False, default=list)
+    keywords: Mapped[List[str]] = mapped_column(ArrayType(), nullable=False, default=list)
     keyword_density: Mapped[Optional[dict]] = mapped_column(JSON, nullable=True)
     named_entities: Mapped[Optional[dict]] = mapped_column(JSON, nullable=True)
     
@@ -375,8 +376,8 @@ class ContentAnalysis(Base):
     confidence_score: Mapped[float] = mapped_column(Float, nullable=False)  # 0-1
     
     # Timestamps
-    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now(), nullable=False)
-    updated_at: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True), onupdate=func.now(), nullable=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=get_timestamp_server_default(), nullable=False)
+    updated_at: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True), onupdate=get_timestamp_server_default(), nullable=True)
     
     # Relationships
     script: Mapped["Script"] = relationship("Script", back_populates="content_analysis")

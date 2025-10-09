@@ -13,7 +13,8 @@ from sqlalchemy import (
     Boolean, DateTime, String, Text, Integer, Float, JSON,
     ForeignKey, Index, UniqueConstraint, CheckConstraint
 )
-from sqlalchemy.dialects.postgresql import UUID, ARRAY
+from sqlalchemy.dialects.postgresql import UUID
+from app.db.types import ArrayType, UUIDType, get_timestamp_server_default
 from sqlalchemy.orm import relationship, Mapped, mapped_column
 from sqlalchemy.sql import func
 
@@ -26,8 +27,8 @@ class Avatar(Base):
     __tablename__ = "avatars"
     
     # Primary identification
-    id: Mapped[UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid4)
-    user_id: Mapped[UUID] = mapped_column(UUID(as_uuid=True), ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
+    id: Mapped[UUID] = mapped_column(UUIDType(), primary_key=True, default=uuid4)
+    user_id: Mapped[UUID] = mapped_column(UUIDType(), ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
     
     # Basic information
     name: Mapped[str] = mapped_column(String(100), nullable=False, index=True)
@@ -91,8 +92,8 @@ class Avatar(Base):
     similarity_score: Mapped[Optional[float]] = mapped_column(Float, nullable=True)  # 0-1
     
     # Timestamps
-    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now(), nullable=False)
-    updated_at: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True), onupdate=func.now(), nullable=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=get_timestamp_server_default(), nullable=False)
+    updated_at: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True), onupdate=get_timestamp_server_default(), nullable=True)
     deleted_at: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True), nullable=True)
     
     # Relationships
@@ -142,11 +143,11 @@ class VideoGenerationJob(Base):
     __tablename__ = "video_generation_jobs"
     
     # Primary identification
-    id: Mapped[UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid4)
-    user_id: Mapped[UUID] = mapped_column(UUID(as_uuid=True), ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
-    avatar_id: Mapped[UUID] = mapped_column(UUID(as_uuid=True), ForeignKey("avatars.id", ondelete="CASCADE"), nullable=False)
-    script_id: Mapped[Optional[UUID]] = mapped_column(UUID(as_uuid=True), ForeignKey("scripts.id", ondelete="SET NULL"), nullable=True)
-    source_video_id: Mapped[Optional[UUID]] = mapped_column(UUID(as_uuid=True), ForeignKey("videos.id", ondelete="SET NULL"), nullable=True)
+    id: Mapped[UUID] = mapped_column(UUIDType(), primary_key=True, default=uuid4)
+    user_id: Mapped[UUID] = mapped_column(UUIDType(), ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
+    avatar_id: Mapped[UUID] = mapped_column(UUIDType(), ForeignKey("avatars.id", ondelete="CASCADE"), nullable=False)
+    script_id: Mapped[Optional[UUID]] = mapped_column(UUIDType(), ForeignKey("scripts.id", ondelete="SET NULL"), nullable=True)
+    source_video_id: Mapped[Optional[UUID]] = mapped_column(UUIDType(), ForeignKey("videos.id", ondelete="SET NULL"), nullable=True)
     
     # Job configuration
     job_type: Mapped[str] = mapped_column(String(50), default="avatar_video", nullable=False, index=True)
@@ -210,8 +211,8 @@ class VideoGenerationJob(Base):
     notification_sent: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
     
     # Timestamps
-    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now(), nullable=False)
-    updated_at: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True), onupdate=func.now(), nullable=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=get_timestamp_server_default(), nullable=False)
+    updated_at: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True), onupdate=get_timestamp_server_default(), nullable=True)
     
     # Relationships
     user: Mapped["User"] = relationship("User")
@@ -266,8 +267,8 @@ class VoiceClone(Base):
     __tablename__ = "voice_clones"
     
     # Primary identification
-    id: Mapped[UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid4)
-    user_id: Mapped[UUID] = mapped_column(UUID(as_uuid=True), ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
+    id: Mapped[UUID] = mapped_column(UUIDType(), primary_key=True, default=uuid4)
+    user_id: Mapped[UUID] = mapped_column(UUIDType(), ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
     
     # Voice information
     name: Mapped[str] = mapped_column(String(100), nullable=False, index=True)
@@ -320,9 +321,9 @@ class VoiceClone(Base):
     error_details: Mapped[Optional[dict]] = mapped_column(JSON, nullable=True)
     
     # Timestamps
-    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now(), nullable=False)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=get_timestamp_server_default(), nullable=False)
     trained_at: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True), nullable=True)
-    updated_at: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True), onupdate=func.now(), nullable=True)
+    updated_at: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True), onupdate=get_timestamp_server_default(), nullable=True)
     deleted_at: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True), nullable=True)
     
     # Relationships
@@ -367,9 +368,9 @@ class BatchVideoGeneration(Base):
     __tablename__ = "batch_video_generations"
     
     # Primary identification
-    id: Mapped[UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid4)
-    user_id: Mapped[UUID] = mapped_column(UUID(as_uuid=True), ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
-    avatar_id: Mapped[UUID] = mapped_column(UUID(as_uuid=True), ForeignKey("avatars.id", ondelete="CASCADE"), nullable=False)
+    id: Mapped[UUID] = mapped_column(UUIDType(), primary_key=True, default=uuid4)
+    user_id: Mapped[UUID] = mapped_column(UUIDType(), ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
+    avatar_id: Mapped[UUID] = mapped_column(UUIDType(), ForeignKey("avatars.id", ondelete="CASCADE"), nullable=False)
     
     # Batch information
     name: Mapped[str] = mapped_column(String(200), nullable=False, index=True)
@@ -381,7 +382,7 @@ class BatchVideoGeneration(Base):
     voice_settings: Mapped[Optional[dict]] = mapped_column(JSON, nullable=True)
     
     # Input data
-    script_ids: Mapped[List[str]] = mapped_column(ARRAY(String), nullable=False)  # UUIDs as strings
+    script_ids: Mapped[List[str]] = mapped_column(ArrayType(), nullable=False)  # UUIDs as strings
     input_data: Mapped[Optional[dict]] = mapped_column(JSON, nullable=True)
     
     # Status and progress
@@ -398,8 +399,8 @@ class BatchVideoGeneration(Base):
     completed_at: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True), nullable=True)
     
     # Results and output
-    result_video_ids: Mapped[List[str]] = mapped_column(ARRAY(String), nullable=False, default=list)
-    failed_job_ids: Mapped[List[str]] = mapped_column(ARRAY(String), nullable=False, default=list)
+    result_video_ids: Mapped[List[str]] = mapped_column(ArrayType(), nullable=False, default=list)
+    failed_job_ids: Mapped[List[str]] = mapped_column(ArrayType(), nullable=False, default=list)
     output_summary: Mapped[Optional[dict]] = mapped_column(JSON, nullable=True)
     
     # Error handling
@@ -410,8 +411,8 @@ class BatchVideoGeneration(Base):
     notification_sent: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
     
     # Timestamps
-    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now(), nullable=False)
-    updated_at: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True), onupdate=func.now(), nullable=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=get_timestamp_server_default(), nullable=False)
+    updated_at: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True), onupdate=get_timestamp_server_default(), nullable=True)
     
     # Relationships
     user: Mapped["User"] = relationship("User")

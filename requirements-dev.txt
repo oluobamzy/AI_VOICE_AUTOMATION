@@ -27,7 +27,7 @@ mkdocs-material>=9.4.8
 mkdocstrings[python]>=0.24.0
 
 # Development Tools
-ipython>=8.17.2
+ipython>=8.5.0,<8.13.0  # Compatible with Python 3.8
 jupyter>=1.0.0
 watchdog>=3.0.0
 

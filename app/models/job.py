@@ -13,7 +13,8 @@ from sqlalchemy import (
     Boolean, DateTime, String, Text, Integer, Float, JSON,
     ForeignKey, Index, UniqueConstraint, CheckConstraint
 )
-from sqlalchemy.dialects.postgresql import UUID, ARRAY
+from sqlalchemy.dialects.postgresql import UUID
+from app.db.types import ArrayType, UUIDType, get_timestamp_server_default
 from sqlalchemy.orm import relationship, Mapped, mapped_column
 from sqlalchemy.sql import func
 
@@ -26,8 +27,8 @@ class Job(Base):
     __tablename__ = "jobs"
     
     # Primary identification
-    id: Mapped[UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid4)
-    user_id: Mapped[Optional[UUID]] = mapped_column(UUID(as_uuid=True), ForeignKey("users.id", ondelete="SET NULL"), nullable=True)
+    id: Mapped[UUID] = mapped_column(UUIDType(), primary_key=True, default=uuid4)
+    user_id: Mapped[Optional[UUID]] = mapped_column(UUIDType(), ForeignKey("users.id", ondelete="SET NULL"), nullable=True)
     
     # Job classification
     job_type: Mapped[str] = mapped_column(String(100), nullable=False, index=True)
@@ -63,7 +64,7 @@ class Job(Base):
     # Result and output
     result: Mapped[Optional[dict]] = mapped_column(JSON, nullable=True)
     result_summary: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
-    output_files: Mapped[List[str]] = mapped_column(ARRAY(String), nullable=False, default=list)
+    output_files: Mapped[List[str]] = mapped_column(ArrayType(), nullable=False, default=list)
     
     # Error handling
     error_code: Mapped[Optional[str]] = mapped_column(String(50), nullable=True)
@@ -78,8 +79,8 @@ class Job(Base):
     timeout: Mapped[Optional[int]] = mapped_column(Integer, nullable=True)  # Timeout in seconds
     
     # Dependencies
-    depends_on: Mapped[List[str]] = mapped_column(ARRAY(String), nullable=False, default=list)  # Job IDs
-    blocks: Mapped[List[str]] = mapped_column(ARRAY(String), nullable=False, default=list)  # Job IDs this blocks
+    depends_on: Mapped[List[str]] = mapped_column(ArrayType(), nullable=False, default=list)  # Job IDs
+    blocks: Mapped[List[str]] = mapped_column(ArrayType(), nullable=False, default=list)  # Job IDs this blocks
     
     # Scheduling
     scheduled_at: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True), nullable=True, index=True)
@@ -92,8 +93,8 @@ class Job(Base):
     failed_at: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True), nullable=True)
     
     # Lifecycle timestamps
-    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now(), nullable=False)
-    updated_at: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True), onupdate=func.now(), nullable=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=get_timestamp_server_default(), nullable=False)
+    updated_at: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True), onupdate=get_timestamp_server_default(), nullable=True)
     
     # Relationships
     user: Mapped[Optional["User"]] = relationship("User")
@@ -155,7 +156,7 @@ class WorkflowDefinition(Base):
     __tablename__ = "workflow_definitions"
     
     # Primary identification
-    id: Mapped[UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid4)
+    id: Mapped[UUID] = mapped_column(UUIDType(), primary_key=True, default=uuid4)
     
     # Workflow information
     name: Mapped[str] = mapped_column(String(200), nullable=False, unique=True, index=True)
@@ -185,12 +186,12 @@ class WorkflowDefinition(Base):
     output_schema: Mapped[Optional[dict]] = mapped_column(JSON, nullable=True)
     
     # Metadata
-    tags: Mapped[List[str]] = mapped_column(ARRAY(String), nullable=False, default=list)
+    tags: Mapped[List[str]] = mapped_column(ArrayType(), nullable=False, default=list)
     created_by: Mapped[Optional[str]] = mapped_column(String(100), nullable=True)
     
     # Timestamps
-    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now(), nullable=False)
-    updated_at: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True), onupdate=func.now(), nullable=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=get_timestamp_server_default(), nullable=False)
+    updated_at: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True), onupdate=get_timestamp_server_default(), nullable=True)
     
     # Relationships
     executions: Mapped[List["WorkflowExecution"]] = relationship("WorkflowExecution", back_populates="workflow_definition", cascade="all, delete-orphan")
@@ -216,9 +217,9 @@ class WorkflowExecution(Base):
     __tablename__ = "workflow_executions"
     
     # Primary identification
-    id: Mapped[UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid4)
-    workflow_definition_id: Mapped[UUID] = mapped_column(UUID(as_uuid=True), ForeignKey("workflow_definitions.id", ondelete="CASCADE"), nullable=False)
-    user_id: Mapped[Optional[UUID]] = mapped_column(UUID(as_uuid=True), ForeignKey("users.id", ondelete="SET NULL"), nullable=True)
+    id: Mapped[UUID] = mapped_column(UUIDType(), primary_key=True, default=uuid4)
+    workflow_definition_id: Mapped[UUID] = mapped_column(UUIDType(), ForeignKey("workflow_definitions.id", ondelete="CASCADE"), nullable=False)
+    user_id: Mapped[Optional[UUID]] = mapped_column(UUIDType(), ForeignKey("users.id", ondelete="SET NULL"), nullable=True)
     
     # Execution information
     name: Mapped[Optional[str]] = mapped_column(String(200), nullable=True)
@@ -231,8 +232,8 @@ class WorkflowExecution(Base):
     # Status and progress
     status: Mapped[str] = mapped_column(String(50), default="pending", nullable=False, index=True)
     current_step: Mapped[Optional[str]] = mapped_column(String(200), nullable=True)
-    completed_steps: Mapped[List[str]] = mapped_column(ARRAY(String), nullable=False, default=list)
-    failed_steps: Mapped[List[str]] = mapped_column(ARRAY(String), nullable=False, default=list)
+    completed_steps: Mapped[List[str]] = mapped_column(ArrayType(), nullable=False, default=list)
+    failed_steps: Mapped[List[str]] = mapped_column(ArrayType(), nullable=False, default=list)
     total_steps: Mapped[int] = mapped_column(Integer, nullable=False)
     progress: Mapped[float] = mapped_column(Float, default=0.0, nullable=False)
     
@@ -254,8 +255,8 @@ class WorkflowExecution(Base):
     scheduled_at: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True), nullable=True)
     
     # Timestamps
-    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now(), nullable=False)
-    updated_at: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True), onupdate=func.now(), nullable=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=get_timestamp_server_default(), nullable=False)
+    updated_at: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True), onupdate=get_timestamp_server_default(), nullable=True)
     
     # Relationships
     workflow_definition: Mapped["WorkflowDefinition"] = relationship("WorkflowDefinition", back_populates="executions")
@@ -303,9 +304,9 @@ class WorkflowJobAssociation(Base):
     __tablename__ = "workflow_job_associations"
     
     # Primary identification
-    id: Mapped[UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid4)
-    workflow_execution_id: Mapped[UUID] = mapped_column(UUID(as_uuid=True), ForeignKey("workflow_executions.id", ondelete="CASCADE"), nullable=False)
-    job_id: Mapped[UUID] = mapped_column(UUID(as_uuid=True), ForeignKey("jobs.id", ondelete="CASCADE"), nullable=False)
+    id: Mapped[UUID] = mapped_column(UUIDType(), primary_key=True, default=uuid4)
+    workflow_execution_id: Mapped[UUID] = mapped_column(UUIDType(), ForeignKey("workflow_executions.id", ondelete="CASCADE"), nullable=False)
+    job_id: Mapped[UUID] = mapped_column(UUIDType(), ForeignKey("jobs.id", ondelete="CASCADE"), nullable=False)
     
     # Association metadata
     step_name: Mapped[str] = mapped_column(String(200), nullable=False)
@@ -313,7 +314,7 @@ class WorkflowJobAssociation(Base):
     is_critical: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False)  # Failure stops workflow
     
     # Timestamps
-    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now(), nullable=False)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=get_timestamp_server_default(), nullable=False)
     
     # Indexes and constraints
     __table_args__ = (
@@ -334,7 +335,7 @@ class JobQueue(Base):
     __tablename__ = "job_queues"
     
     # Primary identification
-    id: Mapped[UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid4)
+    id: Mapped[UUID] = mapped_column(UUIDType(), primary_key=True, default=uuid4)
     
     # Queue information
     name: Mapped[str] = mapped_column(String(100), nullable=False, unique=True, index=True)
@@ -363,8 +364,8 @@ class JobQueue(Base):
     retry_policy: Mapped[Optional[dict]] = mapped_column(JSON, nullable=True)
     
     # Timestamps
-    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now(), nullable=False)
-    updated_at: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True), onupdate=func.now(), nullable=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=get_timestamp_server_default(), nullable=False)
+    updated_at: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True), onupdate=get_timestamp_server_default(), nullable=True)
     
     # Indexes and constraints
     __table_args__ = (
@@ -397,7 +398,7 @@ class JobSchedule(Base):
     __tablename__ = "job_schedules"
     
     # Primary identification
-    id: Mapped[UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid4)
+    id: Mapped[UUID] = mapped_column(UUIDType(), primary_key=True, default=uuid4)
     
     # Schedule information
     name: Mapped[str] = mapped_column(String(200), nullable=False, unique=True, index=True)
@@ -430,8 +431,8 @@ class JobSchedule(Base):
     last_failure_at: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True), nullable=True)
     
     # Timestamps
-    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now(), nullable=False)
-    updated_at: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True), onupdate=func.now(), nullable=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=get_timestamp_server_default(), nullable=False)
+    updated_at: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True), onupdate=get_timestamp_server_default(), nullable=True)
     
     # Indexes and constraints
     __table_args__ = (

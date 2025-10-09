@@ -9,7 +9,7 @@ from datetime import datetime, date
 from typing import Optional, List, Dict, Any, Union
 from uuid import UUID
 
-from pydantic import BaseModel, Field, validator, HttpUrl
+from pydantic import BaseModel, Field, field_validator, HttpUrl
 
 
 class PlatformCredentials(BaseModel):
@@ -23,7 +23,12 @@ class PlatformCredentials(BaseModel):
     scopes: List[str] = Field(default_factory=list, description="Granted permissions")
     is_active: bool = Field(default=True, description="Credential status")
     
-    @validator("platform")
+    @field_validator("platform")
+
+    
+    @classmethod
+
+    
     def validate_platform(cls, v):
         allowed_platforms = [
             "youtube", "tiktok", "instagram", "facebook", "twitter", "linkedin",
@@ -52,7 +57,12 @@ class PublishingProfile(BaseModel):
     created_at: datetime = Field(..., description="Creation timestamp")
     updated_at: Optional[datetime] = Field(None, description="Last update timestamp")
     
-    @validator("hashtag_strategy")
+    @field_validator("hashtag_strategy")
+
+    
+    @classmethod
+
+    
     def validate_hashtag_strategy(cls, v):
         if v is None:
             return v
@@ -77,7 +87,12 @@ class ContentMetadata(BaseModel):
     content_warning: Optional[str] = Field(None, description="Content warning if applicable")
     thumbnail_path: Optional[str] = Field(None, description="Custom thumbnail path")
     
-    @validator("audience")
+    @field_validator("audience")
+
+    
+    @classmethod
+
+    
     def validate_audience(cls, v):
         allowed_audiences = [
             "general", "kids", "teens", "adults", "mature", "family_friendly",
@@ -98,7 +113,12 @@ class PublishRequest(BaseModel):
     monetization: Optional[Dict[str, Any]] = Field(None, description="Monetization settings")
     custom_settings: Optional[Dict[str, Any]] = Field(None, description="Platform-specific custom settings")
     
-    @validator("platforms", each_item=True)
+    @field_validator("platforms", each_item=True)
+
+    
+    @classmethod
+
+    
     def validate_platform_names(cls, v):
         allowed_platforms = [
             "youtube", "tiktok", "instagram", "facebook", "twitter", "linkedin",
@@ -126,7 +146,12 @@ class PublishJob(BaseModel):
     published_at: Optional[datetime] = Field(None, description="Actual publish time")
     created_at: datetime = Field(..., description="Job creation timestamp")
     
-    @validator("status")
+    @field_validator("status")
+
+    
+    @classmethod
+
+    
     def validate_status(cls, v):
         allowed_statuses = [
             "pending", "uploading", "processing", "scheduled", "published",
@@ -288,7 +313,12 @@ class ScheduledPost(BaseModel):
     recurring: Optional[Dict[str, Any]] = Field(None, description="Recurring schedule settings")
     created_at: datetime = Field(..., description="Creation timestamp")
     
-    @validator("status")
+    @field_validator("status")
+
+    
+    @classmethod
+
+    
     def validate_schedule_status(cls, v):
         allowed_statuses = ["scheduled", "processing", "published", "failed", "cancelled"]
         if v not in allowed_statuses:

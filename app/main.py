@@ -13,12 +13,12 @@ from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.middleware.trustedhost import TrustedHostMiddleware
 from fastapi.responses import JSONResponse
-from prometheus_fastapi_instrumentator import Instrumentator
+# from prometheus_fastapi_instrumentator import Instrumentator  # Temporarily disabled for Python 3.8
 
 from app.api.v1.router import api_router
 from app.core.config import settings
 from app.core.logging import setup_logging
-from app.db.session import engine, init_database, close_database
+from app.db.session import engine, init_db, check_db_connection
 
 
 @asynccontextmanager
@@ -33,14 +33,14 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
     setup_logging()
     
     # Initialize database connection pool
-    await init_database()
+    await init_db()
     
     # Start background tasks or other services
     
     yield
     
     # Shutdown
-    await close_database()
+    # Database connections will be closed automatically
 
 
 def create_application() -> FastAPI:
@@ -79,8 +79,9 @@ def create_application() -> FastAPI:
     
     # Set up metrics collection
     if settings.ENABLE_METRICS:
-        instrumentator = Instrumentator()
-        instrumentator.instrument(app).expose(app)
+        # instrumentator = Instrumentator()  # Temporarily disabled for Python 3.8
+        # instrumentator.instrument(app).expose(app)
+        pass
     
     # Include API routes
     app.include_router(api_router, prefix=settings.API_V1_STR)

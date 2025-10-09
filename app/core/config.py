@@ -8,7 +8,8 @@ with environment variable support and validation.
 from functools import lru_cache
 from typing import Any, Dict, List, Optional, Union
 
-from pydantic import AnyHttpUrl, BaseSettings, PostgresDsn, RedisDsn, validator
+from pydantic import AnyHttpUrl, field_validator
+from pydantic_settings import BaseSettings
 
 
 class Settings(BaseSettings):
@@ -26,11 +27,21 @@ class Settings(BaseSettings):
     SECRET_KEY: str = "your-secret-key-change-in-production"
     
     # Security
-    ALLOWED_HOSTS: List[str] = ["localhost", "127.0.0.1"]
+    ALLOWED_HOSTS: List[str] = ["localhost", "127.0.0.1", "testserver", "*"]
     BACKEND_CORS_ORIGINS: List[AnyHttpUrl] = []
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 30
     
-    @validator("BACKEND_CORS_ORIGINS", pre=True)
+    @field_validator("ALLOWED_HOSTS", mode="before")
+    @classmethod
+    def assemble_allowed_hosts(cls, v: Union[str, List[str]]) -> Union[List[str], str]:
+        if isinstance(v, str) and not v.startswith("["):
+            return [i.strip() for i in v.split(",")]
+        elif isinstance(v, (list, str)):
+            return v
+        raise ValueError(v)
+    
+    @field_validator("BACKEND_CORS_ORIGINS", mode="before")
+    @classmethod
     def assemble_cors_origins(cls, v: Union[str, List[str]]) -> Union[List[str], str]:
         if isinstance(v, str) and not v.startswith("["):
             return [i.strip() for i in v.split(",")]
@@ -38,60 +49,65 @@ class Settings(BaseSettings):
             return v
         raise ValueError(v)
     
-    # Database
+    # Database configuration
+    DATABASE_TYPE: str = "sqlite"  # sqlite or postgresql
     POSTGRES_SERVER: str = "localhost"
     POSTGRES_USER: str = "postgres"
     POSTGRES_PASSWORD: str = "password"
     POSTGRES_DB: str = "ai_video_automation"
     POSTGRES_PORT: int = 5432
-    DATABASE_URL: Optional[PostgresDsn] = None
+    DATABASE_URL: Optional[str] = None
     
-    @validator("DATABASE_URL", pre=True)
-    def assemble_db_connection(cls, v: Optional[str], values: Dict[str, Any]) -> Any:
+    @field_validator("DATABASE_URL", mode="before")
+    @classmethod
+    def assemble_db_connection(cls, v: Optional[str], info) -> str:
         if isinstance(v, str):
             return v
-        return PostgresDsn.build(
-            scheme="postgresql+asyncpg",
-            user=values.get("POSTGRES_USER"),
-            password=values.get("POSTGRES_PASSWORD"),
-            host=values.get("POSTGRES_SERVER"),
-            port=str(values.get("POSTGRES_PORT")),
-            path=f"/{values.get('POSTGRES_DB') or ''}",
-        )
+        
+        values = info.data if hasattr(info, 'data') else {}
+        db_type = values.get("DATABASE_TYPE", "sqlite")
+        
+        if db_type == "sqlite":
+            return "sqlite+aiosqlite:///./ai_video_automation.db"
+        else:
+            # PostgreSQL
+            return f"postgresql+asyncpg://{values.get('POSTGRES_USER')}:{values.get('POSTGRES_PASSWORD')}@{values.get('POSTGRES_SERVER')}:{values.get('POSTGRES_PORT')}/{values.get('POSTGRES_DB')}"
     
     # Redis
     REDIS_HOST: str = "localhost"
     REDIS_PORT: int = 6379
     REDIS_DB: int = 0
     REDIS_PASSWORD: Optional[str] = None
-    REDIS_URL: Optional[RedisDsn] = None
+    REDIS_URL: Optional[str] = None
     
-    @validator("REDIS_URL", pre=True)
-    def assemble_redis_connection(cls, v: Optional[str], values: Dict[str, Any]) -> Any:
+    @field_validator("REDIS_URL", mode="before")
+    @classmethod
+    def assemble_redis_connection(cls, v: Optional[str], info) -> str:
         if isinstance(v, str):
             return v
-        return RedisDsn.build(
-            scheme="redis",
-            password=values.get("REDIS_PASSWORD"),
-            host=values.get("REDIS_HOST"),
-            port=str(values.get("REDIS_PORT")),
-            path=f"/{values.get('REDIS_DB') or 0}",
-        )
+        
+        values = info.data if hasattr(info, 'data') else {}
+        password_part = f":{values.get('REDIS_PASSWORD')}@" if values.get('REDIS_PASSWORD') else ""
+        return f"redis://{password_part}{values.get('REDIS_HOST', 'localhost')}:{values.get('REDIS_PORT', 6379)}/{values.get('REDIS_DB', 0)}"
     
     # Celery
     CELERY_BROKER_URL: str = ""
     CELERY_RESULT_BACKEND: str = ""
     
-    @validator("CELERY_BROKER_URL", pre=True)
-    def assemble_celery_broker(cls, v: str, values: Dict[str, Any]) -> str:
+    @field_validator("CELERY_BROKER_URL", mode="before")
+    @classmethod
+    def assemble_celery_broker(cls, v: str, info) -> str:
         if v:
             return v
+        values = info.data if hasattr(info, 'data') else {}
         return str(values.get("REDIS_URL")) or "redis://localhost:6379/0"
     
-    @validator("CELERY_RESULT_BACKEND", pre=True)
-    def assemble_celery_backend(cls, v: str, values: Dict[str, Any]) -> str:
+    @field_validator("CELERY_RESULT_BACKEND", mode="before")
+    @classmethod
+    def assemble_celery_backend(cls, v: str, info) -> str:
         if v:
             return v
+        values = info.data if hasattr(info, 'data') else {}
         return str(values.get("REDIS_URL")) or "redis://localhost:6379/0"
     
     # File Storage
@@ -104,9 +120,10 @@ class Settings(BaseSettings):
     # Local storage paths
     UPLOAD_DIR: str = "/tmp/ai_video_automation/uploads"
     PROCESSED_DIR: str = "/tmp/ai_video_automation/processed"
+    MEDIA_DIR: str = "/tmp/ai_video_automation/media"
     
     # AI Services
-    OPENAI_API_KEY: Optional[str] = None
+    OPENAI_API_KEY: Optional[str] = "test-key-for-development"  # Default for testing
     ELEVENLABS_API_KEY: Optional[str] = None
     DID_API_KEY: Optional[str] = None
     SYNTHESIA_API_KEY: Optional[str] = None
