@@ -31,6 +31,11 @@ class Settings(BaseSettings):
     BACKEND_CORS_ORIGINS: List[AnyHttpUrl] = []
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 30
     
+    @property
+    def secret_key(self) -> str:
+        """Get the secret key for JWT tokens."""
+        return self.SECRET_KEY
+    
     @field_validator("ALLOWED_HOSTS", mode="before")
     @classmethod
     def assemble_allowed_hosts(cls, v: Union[str, List[str]]) -> Union[List[str], str]:

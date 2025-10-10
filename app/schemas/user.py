@@ -214,3 +214,17 @@ class ApiKeyResponse(BaseModel):
     
     class Config:
         from_attributes = True
+
+
+class Token(BaseModel):
+    """Schema for authentication token response."""
+    access_token: str = Field(..., description="JWT access token")
+    token_type: str = Field(default="bearer", description="Token type")
+    expires_in: int = Field(default=1800, description="Token expiration time in seconds")
+    user: UserResponse = Field(..., description="User information")
+
+
+class TokenData(BaseModel):
+    """Schema for token data validation."""
+    user_id: Optional[str] = None
+    email: Optional[str] = None

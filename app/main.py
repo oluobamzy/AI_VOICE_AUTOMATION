@@ -13,6 +13,7 @@ from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.middleware.trustedhost import TrustedHostMiddleware
 from fastapi.responses import JSONResponse
+from fastapi.staticfiles import StaticFiles
 # from prometheus_fastapi_instrumentator import Instrumentator  # Temporarily disabled for Python 3.8
 
 from app.api.v1.router import api_router
@@ -60,15 +61,15 @@ def create_application() -> FastAPI:
         lifespan=lifespan,
     )
     
-    # Set up CORS
-    if settings.BACKEND_CORS_ORIGINS:
-        app.add_middleware(
-            CORSMiddleware,
-            allow_origins=[str(origin) for origin in settings.BACKEND_CORS_ORIGINS],
-            allow_credentials=True,
-            allow_methods=["*"],
-            allow_headers=["*"],
-        )
+    
+    # Set up CORS - Allow frontend access
+    app.add_middleware(
+        CORSMiddleware,
+        allow_origins=["http://localhost:3000", "http://127.0.0.1:3000", "http://localhost:8000", "http://127.0.0.1:8000", "*"],  # Allow frontend
+        allow_credentials=True,
+        allow_methods=["*"],
+        allow_headers=["*"],
+    )
     
     # Add trusted host middleware for security
     if settings.ALLOWED_HOSTS:
@@ -83,8 +84,14 @@ def create_application() -> FastAPI:
         # instrumentator.instrument(app).expose(app)
         pass
     
-    # Include API routes
+    # Include API routes FIRST (before static files)
     app.include_router(api_router, prefix=settings.API_V1_STR)
+    
+    # Mount static files for frontend (CSS, JS, images)
+    import os
+    frontend_path = os.path.join(os.path.dirname(os.path.dirname(__file__)), "frontend")
+    if os.path.exists(frontend_path):
+        app.mount("/static", StaticFiles(directory=frontend_path), name="static")
     
     # Add custom exception handlers
     app.add_exception_handler(RequestValidationError, validation_exception_handler)
@@ -123,13 +130,21 @@ app = create_application()
 
 @app.get("/")
 async def root():
-    """Root endpoint for health checks."""
-    return {
-        "message": "AI Video Automation Pipeline",
-        "version": "0.1.0",
-        "status": "operational",
-        "environment": settings.ENVIRONMENT,
-    }
+    """Serve the frontend application."""
+    import os
+    from fastapi.responses import FileResponse
+    
+    frontend_path = os.path.join(os.path.dirname(os.path.dirname(__file__)), "frontend", "index.html")
+    if os.path.exists(frontend_path):
+        return FileResponse(frontend_path)
+    else:
+        return {
+            "message": "AI Video Automation Pipeline",
+            "version": "0.1.0",
+            "status": "operational",
+            "environment": settings.ENVIRONMENT,
+            "frontend": "not_found"
+        }
 
 
 @app.get("/health")
